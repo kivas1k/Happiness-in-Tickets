@@ -17,7 +17,8 @@ from app.ticket_logic import (
     count_prime_tickets,
     count_divisible_tickets,
     is_cube,is_square,is_nth_power,
-    find_lucky_ticket_intervals
+    find_lucky_ticket_intervals,
+    calculate_lucky_density
 )
 
 
@@ -263,6 +264,8 @@ class WelcomeWindow(QMainWindow):
 
         self.count_find_lucky_ticket_intervals_button = QPushButton("Найти макс. и мин. промежутки")
         button_row5.addWidget(self.count_find_lucky_ticket_intervals_button)
+        self.plot_density_button = QPushButton("Построить график плотности")
+        button_row5.addWidget(self.plot_density_button)
 
         # Добавляем строки кнопок в основной лейаут
 
@@ -306,6 +309,9 @@ class WelcomeWindow(QMainWindow):
         self.count_power_timer = QTimer()
         self.count_power_timer.timeout.connect(lambda: self.count_power_button.setEnabled(True))
 
+        self.plot_density_timer = QTimer()
+        self.plot_density_timer.timeout.connect(lambda: self.plot_density_button.setEnabled(True))
+
         self.count_find_lucky_ticket_intervals_timer = QTimer()
         self.count_find_lucky_ticket_intervals_timer.timeout.connect(
             lambda: self.count_find_lucky_ticket_intervals_button.setEnabled(True))
@@ -317,6 +323,7 @@ class WelcomeWindow(QMainWindow):
         self.count_palindrome_button.clicked.connect(self.count_palindromic_tickets)
         self.count_prime_button.clicked.connect(self.count_prime_tickets)
         self.count_divisible_button.clicked.connect(self.count_divisible_tickets)
+        self.plot_density_button.clicked.connect(self.plot_lucky_density)
 
         # Степени и тд.
 
@@ -364,6 +371,7 @@ class WelcomeWindow(QMainWindow):
             self.count_cube_button.setEnabled(True)
             self.count_power_button.setEnabled(True)
             self.count_find_lucky_ticket_intervals_button.setEnabled(True)
+            self.plot_density_button.setEnabled(True)
 
         self.load_file_button.setEnabled(True)
 
@@ -492,6 +500,7 @@ class WelcomeWindow(QMainWindow):
         self.count_square_button.setEnabled(False)
         self.count_cube_button.setEnabled(False)
         self.count_power_button.setEnabled(False)
+        self.count_find_lucky_ticket_intervals_button.setEnabled(False)
 
         for i in reversed(range(self.analysis_layout.count())):
             widget = self.analysis_layout.itemAt(i).widget()
@@ -511,6 +520,7 @@ class WelcomeWindow(QMainWindow):
         self.count_square_button.setEnabled(True)
         self.count_cube_button.setEnabled(True)
         self.count_power_button.setEnabled(True)
+        self.count_find_lucky_ticket_intervals_button.setEnabled(True)
 
     def init_settings_tab(self):
         """Инициализация вкладки с настройками (изменение разрешения окна)."""
@@ -540,6 +550,45 @@ class WelcomeWindow(QMainWindow):
             width, height = map(int, resolution.split('x'))
             self.resize(width, height)
             self.btn_toggle.setToolTip("Перейти в оконный режим")
+
+    def plot_lucky_density(self):
+        self.plot_density_button.setEnabled(False)
+        all_tickets = self.get_all_tickets_from_table()
+        if not all_tickets:
+            self.show_result("Нет данных для построения графика.")
+            self.plot_density_timer.start(2000)
+            return
+
+        from app.ticket_logic import calculate_lucky_density
+        bin_centers, densities, bin_edges = calculate_lucky_density(all_tickets)
+
+        if not bin_centers.size:
+            self.show_result("Недостаточно данных для построения графика.")
+            self.plot_density_timer.start(2000)
+            return
+
+        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+        import seaborn as sns
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.barplot(x=bin_centers, y=densities, ax=ax, palette="Blues_d", alpha=0.8)
+
+        # Форматирование подписей
+        labels = [f"{int(bin_edges[i]):06d}-{int(bin_edges[i + 1]) - 1:06d}" for i in range(len(bin_edges) - 1)]
+        ax.set_xticks(range(len(bin_centers)))
+        ax.set_xticklabels(labels, rotation=45, ha='right')
+        ax.set_title("Плотность счастливых билетов по диапазонам номеров")
+        ax.set_xlabel("Диапазон номеров")
+        ax.set_ylabel("Доля счастливых билетов")
+        plt.tight_layout()
+
+        plot_window = QMainWindow(self)
+        plot_window.setWindowTitle("График плотности")
+        plot_window.setCentralWidget(FigureCanvas(fig))
+        plot_window.resize(1000, 600)
+        plot_window.show()
+        self.plot_density_timer.start(2000)
 
 if __name__ == "__main__":
     app = QApplication([])

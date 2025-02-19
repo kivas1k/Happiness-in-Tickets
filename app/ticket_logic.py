@@ -110,3 +110,38 @@ def find_lucky_ticket_intervals(lucky_tickets):
     max_interval = np.max(all_differences)
 
     return min_interval, max_interval
+
+
+def calculate_lucky_density(tickets):
+    ticket_numbers = []
+    for ticket in tickets:
+        padded_ticket = str(ticket).zfill(6)
+        if len(padded_ticket) != 6:
+            continue
+        try:
+            num = int(padded_ticket)
+            ticket_numbers.append(num)
+        except ValueError:
+            continue
+
+    if not ticket_numbers:
+        return np.array([]), np.array([]), np.array([])
+
+    # Фиксируем диапазон от 000000 до 1000000
+    min_ticket = 0
+    max_ticket = 1000000
+    num_bins = 10
+    bin_edges = np.linspace(min_ticket, max_ticket, num_bins + 1)
+
+    # Гистограмма для всех билетов
+    hist_all, _ = np.histogram(ticket_numbers, bins=bin_edges)
+
+    # Гистограмма для счастливых билетов
+    lucky_numbers = [int(str(t).zfill(6)) for t in tickets if is_lucky(t)]
+    hist_lucky, _ = np.histogram(lucky_numbers, bins=bin_edges)
+
+    # Расчет плотности
+    density = np.divide(hist_lucky, hist_all, out=np.zeros_like(hist_lucky, dtype=float), where=hist_all != 0)
+
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    return bin_centers, density, bin_edges
