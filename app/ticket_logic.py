@@ -1,56 +1,112 @@
+import numpy as np
+from sympy import isprime, integer_nthroot
+
 def read_and_analyze_tickets(file_path):
     """
     Функция для считывания и анализа билетов.
-    Возвращает список всех билетов и список счастливых билетов.
     """
     try:
         with open(file_path, 'r') as file:
             tickets = file.readlines()
-        tickets = [ticket.strip() for ticket in tickets if ticket.strip()]
+        tickets = np.array([ticket.strip() for ticket in tickets if ticket.strip()])
     except Exception as e:
         print(f"Ошибка при чтении файла: {e}")
-        return [], []
+        return np.array([]), np.array([])
 
-    lucky_tickets = [ticket for ticket in tickets if is_lucky(ticket)]
+    lucky_tickets = tickets[np.vectorize(is_lucky)(tickets)]
     return tickets, lucky_tickets
 
-
 def is_lucky(ticket):
-    """
-    Функция для проверки, является ли билет счастливым.
-    Счастливым считается билет с шестизначным номером, у которого сумма первых трёх цифр равна сумме последних.
-    """
+    """Проверяет, является ли билет счастливым."""
     ticket_str = str(ticket)
-    if len(ticket_str) == 6:
-        first_half = sum(int(digit) for digit in ticket_str[:3])
-        second_half = sum(int(digit) for digit in ticket_str[3:])
-        return first_half == second_half
+    if len(ticket_str) == 6 and ticket_str.isdigit():
+        digits = np.array(list(map(int, ticket_str)))
+        return digits[:3].sum() == digits[3:].sum()
     return False
 
-
 def count_even_odd_tickets(tickets):
-    """
-    Функция для подсчета четных и нечетных билетов.
-
-    Логика:
-      1. Перебираем все билеты и пытаемся преобразовать их в число.
-      2. Если преобразование успешно, добавляем число в список valid_numbers.
-      3. Подсчитываем количество четных чисел через генератор, а нечетных – как разницу между общим количеством и числом четных.
-    """
-    valid_numbers = []
-    for ticket in tickets:
-        try:
-            number = int(ticket)
-            valid_numbers.append(number)
-        except ValueError:
-            continue
-    even_count = sum(1 for num in valid_numbers if num % 2 == 0)
-    odd_count = len(valid_numbers) - even_count
-    return even_count, odd_count
-
+    """Подсчитывает четные и нечетные билеты."""
+    try:
+        numbers = np.array(list(map(int, tickets)))
+        even_count = np.sum(numbers % 2 == 0)
+        return even_count, len(numbers) - even_count
+    except ValueError:
+        return 0, 0
 
 def count_lucky_tickets(tickets):
+    """Подсчитывает количество счастливых билетов."""
+    return np.sum(np.vectorize(is_lucky)(tickets))
+
+def is_palindrome(ticket):
+    """Проверяет, является ли билет палиндромом."""
+    ticket_str = str(ticket)
+    return ticket_str == ticket_str[::-1] if ticket_str.isdigit() and len(ticket_str) == 6 else False
+
+def count_palindromic_tickets(tickets):
+    """Подсчитывает количество палиндромных билетов."""
+    return np.sum(np.vectorize(is_palindrome)(tickets))
+
+def count_prime_tickets(tickets):
+    """Подсчитывает количество билетов, являющихся простыми числами."""
+    try:
+        numbers = np.array(list(map(int, tickets)))
+        return np.sum(np.vectorize(isprime)(numbers))
+    except ValueError:
+        return 0
+
+def count_divisible_tickets(tickets):
+    """Подсчитывает количество билетов, у которых одна половина делится на другую."""
+    count = 0
+    for ticket in tickets:
+        ticket_str = str(ticket)
+        if len(ticket_str) == 6 and ticket_str.isdigit():
+            left, right = int(ticket_str[:3]), int(ticket_str[3:])
+            if (left != 0 and right % left == 0) or (right != 0 and left % right == 0):
+                count += 1
+    return count
+
+
+def is_square(ticket):
+    """Проверяет, является ли номер билета квадратом числа."""
+    try:
+        ticket_num = int(ticket)
+        root, is_exact = integer_nthroot(ticket_num, 2)
+        return is_exact
+    except ValueError:
+        return False
+
+def is_cube(ticket):
+    """Проверяет, является ли номер билета кубом числа."""
+    try:
+        ticket_num = int(ticket)
+        root, is_exact = integer_nthroot(ticket_num, 3)
+        return is_exact
+    except ValueError:
+        return False
+
+def is_nth_power(ticket, n):
+    """Проверяет, является ли номер билета n-ой степенью числа."""
+    try:
+        ticket_num = int(ticket)
+        if n <= 0:
+            return False
+        root, is_exact = integer_nthroot(ticket_num, n)
+        return is_exact
+    except ValueError:
+        return False
+
+def find_lucky_ticket_intervals(lucky_tickets):
     """
-    Функция для подсчета счастливых билетов.
+    Находит самый короткий и самый длинный промежуток между всеми возможными парами счастливых билетов.
     """
-    return sum(1 for ticket in tickets if is_lucky(ticket))
+    if len(lucky_tickets) < 2:
+        return None, None
+
+    lucky_numbers = np.array(list(map(int, lucky_tickets)))
+
+    all_differences = np.abs(lucky_numbers[:, None] - lucky_numbers)
+
+    min_interval = np.min(all_differences[all_differences > 0])
+    max_interval = np.max(all_differences)
+
+    return min_interval, max_interval
