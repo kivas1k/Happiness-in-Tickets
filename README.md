@@ -36,7 +36,7 @@
 - Matplotlib, Seaborn (для визуализации)
 
 ## Если хотите сделать exe:
-в консоль вводите - pyinstaller run.spec 
+В консоль вводите - pyinstaller run.spec 
 
 ## Автор:
 - (kivas1k)

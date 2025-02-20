@@ -2,6 +2,9 @@ import os
 import sys
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFontDatabase
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import seaborn as sns
 from PySide6.QtWidgets import QInputDialog
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout,
@@ -21,7 +24,6 @@ from app.ticket_logic import (
     calculate_lucky_density
 )
 
-
 class WelcomeWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -31,9 +33,7 @@ class WelcomeWindow(QMainWindow):
         self.font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
 
         self.setWindowTitle("Happiness in Tickets")
-        self.showFullScreen()  # Полный экран
-
-        # Создаем центральный контейнер и основной layout
+        self.showFullScreen()
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -41,21 +41,15 @@ class WelcomeWindow(QMainWindow):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
 
-        # Добавляем кастомную панель управления окнами
-
         self.title_bar = self.create_title_bar()
         self.main_layout.addWidget(self.title_bar)
 
         self.tabs = QTabWidget()
         self.main_layout.addWidget(self.tabs)
 
-        # Вкладка для анализа билетов
-
         self.analysis_tab = QWidget()
         self.analysis_layout = QVBoxLayout(self.analysis_tab)
         self.tabs.addTab(self.analysis_tab, "Анализ билетов")
-
-        # Вкладка для настроек
 
         self.settings_tab = QWidget()
         self.settings_layout = QVBoxLayout(self.settings_tab)
@@ -75,11 +69,9 @@ class WelcomeWindow(QMainWindow):
                 color: #444;
                 font-size: 16px;
             }}
-            /* Увеличиваем межстрочный интервал для многострочных меток */
             QLabel#welcomeLabel {{
                 line-height: 1.8;
             }}
-            /* Стилизация вкладок с 3D-эффектом */
             QTabBar::tab {{
                 min-height: 40px;
                 padding: 10px;
@@ -142,14 +134,11 @@ class WelcomeWindow(QMainWindow):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
 
-        # Метка с названием приложения слева
-
         title_label = QLabel("Happiness in Tickets")
         layout.addWidget(title_label)
         layout.addStretch()
 
         # Ж
-
         btn_minimize = QPushButton("")
         btn_minimize.setToolTip("Свернуть")
         btn_minimize.setFixedSize(30, 30)
@@ -158,7 +147,6 @@ class WelcomeWindow(QMainWindow):
         layout.addWidget(btn_minimize)
 
         # З
-
         self.btn_toggle = QPushButton("")
         self.btn_toggle.setToolTip("Перейти в оконный режим")
         self.btn_toggle.setFixedSize(30, 30)
@@ -167,7 +155,6 @@ class WelcomeWindow(QMainWindow):
         layout.addWidget(self.btn_toggle)
 
         # К
-
         btn_close = QPushButton("")
         btn_close.setToolTip("Закрыть")
         btn_close.setFixedSize(30, 30)
@@ -224,21 +211,15 @@ class WelcomeWindow(QMainWindow):
         self.guide_label.setWordWrap(True)
         self.analysis_layout.addWidget(self.guide_label)
 
-        # Кнопка загрузки файла
-
         self.load_file_button = QPushButton("Загрузить файл")
         self.load_file_button.clicked.connect(self.choose_file_and_analyze)
         self.analysis_layout.addWidget(self.load_file_button)
-
-        # Создаем горизонтальные контейнеры для кнопок
 
         button_row1 = QHBoxLayout()
         button_row2 = QHBoxLayout()
         button_row3 = QHBoxLayout()
         button_row4 = QHBoxLayout()
         button_row5 = QHBoxLayout()
-
-        # Добавляем кнопки в строки
 
         self.count_even_button = QPushButton("Посчитать четные билеты")
         self.count_odd_button = QPushButton("Посчитать нечетные билеты")
@@ -267,20 +248,14 @@ class WelcomeWindow(QMainWindow):
         self.plot_density_button = QPushButton("Построить график плотности")
         button_row5.addWidget(self.plot_density_button)
 
-        # Добавляем строки кнопок в основной лейаут
-
         self.analysis_layout.addLayout(button_row1)
         self.analysis_layout.addLayout(button_row2)
         self.analysis_layout.addLayout(button_row3)
         self.analysis_layout.addLayout(button_row4)
         self.analysis_layout.addLayout(button_row5)
 
-        # Кнопка сброса
-
         self.reset_button = QPushButton("Сбросить всю историю запросов")
         self.analysis_layout.addWidget(self.reset_button)
-
-        # Таймеры для кнопок
 
         self.count_even_timer = QTimer()
         self.count_even_timer.timeout.connect(lambda: self.count_even_button.setEnabled(True))
@@ -316,7 +291,6 @@ class WelcomeWindow(QMainWindow):
         self.count_find_lucky_ticket_intervals_timer.timeout.connect(
             lambda: self.count_find_lucky_ticket_intervals_button.setEnabled(True))
 
-        # Подключение кнопок к функциям
         self.count_even_button.clicked.connect(self.count_even_tickets)
         self.count_odd_button.clicked.connect(self.count_odd_tickets)
         self.count_lucky_button.clicked.connect(self.count_lucky_tickets)
@@ -325,19 +299,13 @@ class WelcomeWindow(QMainWindow):
         self.count_divisible_button.clicked.connect(self.count_divisible_tickets)
         self.plot_density_button.clicked.connect(self.plot_lucky_density)
 
-        # Степени и тд.
-
         self.count_square_button.clicked.connect(self.check_square_tickets)
         self.count_cube_button.clicked.connect(self.check_cube_tickets)
         self.count_power_button.clicked.connect(self.check_power_tickets)
 
-        # Разница макс и мин
-
         self.count_find_lucky_ticket_intervals_button.clicked.connect(self.count_find_lucky_ticket_intervals)
 
         self.reset_button.clicked.connect(self.reset_all_data)
-
-        # Таблицы
 
         self.all_tickets_table = QTableWidget()
         self.analysis_layout.addWidget(self.all_tickets_table)
@@ -567,14 +535,9 @@ class WelcomeWindow(QMainWindow):
             self.plot_density_timer.start(2000)
             return
 
-        import matplotlib.pyplot as plt
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-        import seaborn as sns
-
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.barplot(x=bin_centers, y=densities, ax=ax, palette="Blues_d", alpha=0.8)
 
-        # Форматирование подписей
         labels = [f"{int(bin_edges[i]):06d}-{int(bin_edges[i + 1]) - 1:06d}" for i in range(len(bin_edges) - 1)]
         ax.set_xticks(range(len(bin_centers)))
         ax.set_xticklabels(labels, rotation=45, ha='right')
