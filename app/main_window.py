@@ -1,5 +1,3 @@
-import os
-import sys
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFontDatabase
 import matplotlib.pyplot as plt
@@ -93,10 +91,11 @@ class WelcomeWindow(QMainWindow):
                 background-color: #007bff;
                 color: white;
                 border: none;
-                border-radius: 10px;
-                padding: 10px 20px;
+                border-radius: 8px;
+                padding: 12px 20px;
                 font-size: 16px;
-                margin-top: 20px;
+                margin: 10px;       
+                min-width: 120px; 
             }}
             QPushButton:hover {{
                 background-color: #0056b3;
@@ -125,8 +124,7 @@ class WelcomeWindow(QMainWindow):
 
     def create_title_bar(self):
         """Создает панель в верхней части окна с кнопками:
-        свернуть, переключить режим и закрыть. Кнопки – это чистые квадраты (30×30)
-        без текста внутри, с разными цветами и подсказками.
+        свернуть, переключить режим и закрыть.
         """
         title_bar = QWidget()
         title_bar.setFixedHeight(40)
@@ -174,7 +172,6 @@ class WelcomeWindow(QMainWindow):
 
     def init_analysis_tab(self):
         """Инициализация вкладки для анализа билетов."""
-
         self.welcome_text = """
         <p style="line-height:1.8;">
         Добро пожаловать в приложение "Счастье в билетах"!<br>
@@ -313,8 +310,14 @@ class WelcomeWindow(QMainWindow):
         self.lucky_tickets_table = QTableWidget()
         self.analysis_layout.addWidget(self.lucky_tickets_table)
 
+    def show_error(self, message):
+        """Отображает сообщение об ошибке с красным цветом текста."""
+        error_label = QLabel(message)
+        error_label.setStyleSheet("color: red; font-weight: bold;")
+        self.analysis_layout.addWidget(error_label)
+
     def choose_file_and_analyze(self):
-        """Открывает диалог выбора файла и запускает анализ билетов с помощью функций из ticket_logic."""
+        """Открывает диалог выбора файла и запускает анализ билетов."""
         self.guide_label.hide()
         self.load_file_button.setEnabled(False)
 
@@ -324,6 +327,12 @@ class WelcomeWindow(QMainWindow):
         )
         if file_path:
             all_tickets, lucky_tickets = read_and_analyze_tickets(file_path)
+
+            if len(all_tickets) == 0:
+                self.show_error(
+                    "Ошибка загрузки файла. Проверьте формат данных (файл должен содержать шестизначные числа).")
+                self.load_file_button.setEnabled(True)
+                return
 
             self.fill_table(self.all_tickets_table, all_tickets)
             self.fill_table(self.lucky_tickets_table, lucky_tickets)

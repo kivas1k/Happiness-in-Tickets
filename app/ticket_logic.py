@@ -1,10 +1,9 @@
 import numpy as np
-from sympy import isprime, integer_nthroot
+from sympy import isprime, integer_nthroot, false
+
 
 def read_and_analyze_tickets(file_path):
-    """
-    Функция для считывания и анализа билетов.
-    """
+    """ Функция для считывания и анализа билетов."""
     try:
         with open(file_path, 'r') as file:
             tickets = file.readlines()
@@ -13,8 +12,13 @@ def read_and_analyze_tickets(file_path):
         print(f"Ошибка при чтении файла: {e}")
         return np.array([]), np.array([])
 
+    if not all(len(ticket) == 6 and ticket.isdigit() for ticket in tickets):
+        print("Ошибка: В файле содержатся некорректные данные (не шестизначные числа или буквы).")
+        return np.array([]), np.array([])
+
     lucky_tickets = tickets[np.vectorize(is_lucky)(tickets)]
     return tickets, lucky_tickets
+
 
 def is_lucky(ticket):
     """Проверяет, является ли билет счастливым."""
@@ -24,6 +28,7 @@ def is_lucky(ticket):
         return digits[:3].sum() == digits[3:].sum()
     return False
 
+
 def count_even_odd_tickets(tickets):
     """Подсчитывает четные и нечетные билеты."""
     try:
@@ -31,20 +36,24 @@ def count_even_odd_tickets(tickets):
         even_count = np.sum(numbers % 2 == 0)
         return even_count, len(numbers) - even_count
     except ValueError:
-        return 0, 0
+        return False
+
 
 def count_lucky_tickets(tickets):
     """Подсчитывает количество счастливых билетов."""
     return np.sum(np.vectorize(is_lucky)(tickets))
+
 
 def is_palindrome(ticket):
     """Проверяет, является ли билет палиндромом."""
     ticket_str = str(ticket)
     return ticket_str == ticket_str[::-1] if ticket_str.isdigit() and len(ticket_str) == 6 else False
 
+
 def count_palindromic_tickets(tickets):
     """Подсчитывает количество палиндромных билетов."""
     return np.sum(np.vectorize(is_palindrome)(tickets))
+
 
 def count_prime_tickets(tickets):
     """Подсчитывает количество билетов, являющихся простыми числами."""
@@ -52,7 +61,8 @@ def count_prime_tickets(tickets):
         numbers = np.array(list(map(int, tickets)))
         return np.sum(np.vectorize(isprime)(numbers))
     except ValueError:
-        return 0
+        return False
+
 
 def count_divisible_tickets(tickets):
     """Подсчитывает количество билетов, у которых одна половина делится на другую."""
@@ -65,6 +75,7 @@ def count_divisible_tickets(tickets):
                 count += 1
     return count
 
+
 def is_square(ticket):
     """Проверяет, является ли номер билета квадратом числа."""
     try:
@@ -74,6 +85,7 @@ def is_square(ticket):
     except ValueError:
         return False
 
+
 def is_cube(ticket):
     """Проверяет, является ли номер билета кубом числа."""
     try:
@@ -82,6 +94,7 @@ def is_cube(ticket):
         return is_exact
     except ValueError:
         return False
+
 
 def is_nth_power(ticket, n):
     """Проверяет, является ли номер билета n-ой степенью числа."""
@@ -94,10 +107,9 @@ def is_nth_power(ticket, n):
     except ValueError:
         return False
 
+
 def find_lucky_ticket_intervals(lucky_tickets):
-    """
-    Находит самый короткий и самый длинный промежуток между всеми возможными парами счастливых билетов.
-    """
+    """Находит самый короткий и самый длинный промежуток между всеми возможными парами счастливых билетов."""
     if len(lucky_tickets) < 2:
         return None, None
 
@@ -109,6 +121,7 @@ def find_lucky_ticket_intervals(lucky_tickets):
     max_interval = np.max(all_differences)
 
     return min_interval, max_interval
+
 
 def calculate_lucky_density(tickets):
     ticket_numbers = []
